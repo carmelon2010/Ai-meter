@@ -1,0 +1,797 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>AI Ethics Meter</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet"/>
+<style>
+  :root {
+    --bg: #0d0d0f;
+    --surface: #141418;
+    --border: #2a2a35;
+    --gold: #c9a84c;
+    --gold-light: #e8c97a;
+    --gold-dim: rgba(201,168,76,0.15);
+    --text: #e8e6e0;
+    --muted: #7a7870;
+    --green: #4caf7a;
+    --yellow: #e8c84c;
+    --orange: #e8924c;
+    --red: #e84c4c;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 40px 20px;
+    background-image:
+      radial-gradient(ellipse at 20% 20%, rgba(201,168,76,0.04) 0%, transparent 60%),
+      radial-gradient(ellipse at 80% 80%, rgba(201,168,76,0.03) 0%, transparent 60%);
+  }
+
+  /* HEADER */
+  .header {
+    text-align: center;
+    margin-bottom: 48px;
+    animation: fadeDown 0.8s ease both;
+  }
+  .header-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 4px;
+    color: var(--gold);
+    text-transform: uppercase;
+    margin-bottom: 16px;
+  }
+  .header h1 {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(36px, 6vw, 64px);
+    font-weight: 900;
+    line-height: 1;
+    color: var(--text);
+    margin-bottom: 12px;
+  }
+  .header h1 span {
+    color: var(--gold);
+    font-style: italic;
+  }
+  .header p {
+    font-size: 15px;
+    color: var(--muted);
+    max-width: 440px;
+    margin: 0 auto;
+    line-height: 1.6;
+  }
+
+  /* DIVIDER */
+  .divider {
+    width: 80px;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--gold), transparent);
+    margin: 20px auto;
+  }
+
+  /* PROGRESS */
+  .progress-bar-wrap {
+    width: 100%;
+    max-width: 600px;
+    margin-bottom: 32px;
+    animation: fadeUp 0.6s ease both 0.2s;
+  }
+  .progress-meta {
+    display: flex;
+    justify-content: space-between;
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    color: var(--muted);
+    margin-bottom: 8px;
+    letter-spacing: 1px;
+  }
+  .progress-track {
+    height: 2px;
+    background: var(--border);
+    border-radius: 2px;
+    overflow: hidden;
+  }
+  .progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--gold), var(--gold-light));
+    border-radius: 2px;
+    transition: width 0.5s cubic-bezier(0.4,0,0.2,1);
+  }
+
+  /* CARD */
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 40px;
+    width: 100%;
+    max-width: 600px;
+    position: relative;
+    overflow: hidden;
+    animation: fadeUp 0.5s ease both;
+  }
+  .card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, var(--gold), transparent);
+  }
+
+  .q-number {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    color: var(--gold);
+    letter-spacing: 3px;
+    margin-bottom: 16px;
+  }
+  .q-text {
+    font-family: 'Playfair Display', serif;
+    font-size: 24px;
+    font-weight: 700;
+    line-height: 1.3;
+    margin-bottom: 8px;
+    color: var(--text);
+  }
+  .q-sub {
+    font-size: 13px;
+    color: var(--muted);
+    margin-bottom: 32px;
+    line-height: 1.5;
+  }
+
+  /* OPTIONS */
+  .options {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .option-btn {
+    background: transparent;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 16px 20px;
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    cursor: pointer;
+    text-align: left;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    position: relative;
+    overflow: hidden;
+  }
+  .option-btn::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: var(--gold-dim);
+    opacity: 0;
+    transition: opacity 0.2s;
+  }
+  .option-btn:hover {
+    border-color: var(--gold);
+    transform: translateX(4px);
+  }
+  .option-btn:hover::after { opacity: 1; }
+  .option-btn.selected {
+    border-color: var(--gold);
+    background: var(--gold-dim);
+    color: var(--gold-light);
+  }
+  .option-icon {
+    font-size: 20px;
+    flex-shrink: 0;
+  }
+  .option-text { flex: 1; line-height: 1.4; }
+
+  /* NAV */
+  .nav {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 32px;
+  }
+  .btn-back {
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--muted);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px;
+    padding: 10px 20px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .btn-back:hover { border-color: var(--muted); color: var(--text); }
+  .btn-next {
+    background: var(--gold);
+    border: none;
+    color: #0d0d0f;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    font-weight: 600;
+    padding: 12px 28px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    opacity: 0.3;
+    pointer-events: none;
+  }
+  .btn-next.active {
+    opacity: 1;
+    pointer-events: all;
+  }
+  .btn-next.active:hover {
+    background: var(--gold-light);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 20px rgba(201,168,76,0.3);
+  }
+
+  /* RESULT */
+  .result-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 48px 40px;
+    width: 100%;
+    max-width: 600px;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+    animation: fadeUp 0.6s ease both;
+  }
+
+  /* GAUGE */
+  .gauge-wrap {
+    margin: 32px auto;
+    width: 220px;
+    height: 120px;
+    position: relative;
+  }
+  .gauge-svg { width: 100%; height: 100%; overflow: visible; }
+
+  .verdict-badge {
+    display: inline-block;
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 3px;
+    padding: 6px 16px;
+    border-radius: 20px;
+    margin-bottom: 16px;
+    text-transform: uppercase;
+  }
+  .verdict-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 32px;
+    font-weight: 900;
+    margin-bottom: 12px;
+    line-height: 1.1;
+  }
+  .verdict-desc {
+    font-size: 14px;
+    color: var(--muted);
+    max-width: 420px;
+    margin: 0 auto 32px;
+    line-height: 1.7;
+  }
+
+  /* BREAKDOWN */
+  .breakdown {
+    background: rgba(255,255,255,0.02);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 24px;
+    text-align: left;
+    margin-bottom: 24px;
+  }
+  .breakdown-title {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 3px;
+    color: var(--gold);
+    margin-bottom: 16px;
+  }
+  .breakdown-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 10px 0;
+    border-bottom: 1px solid rgba(255,255,255,0.04);
+    font-size: 13px;
+    line-height: 1.5;
+  }
+  .breakdown-item:last-child { border-bottom: none; }
+  .breakdown-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+    margin-top: 4px;
+  }
+
+  .btn-restart {
+    background: transparent;
+    border: 1px solid var(--gold);
+    color: var(--gold);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    font-weight: 500;
+    padding: 12px 28px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s;
+    letter-spacing: 0.5px;
+  }
+  .btn-restart:hover {
+    background: var(--gold-dim);
+    transform: translateY(-1px);
+  }
+
+  /* INTRO */
+  .intro-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 48px 40px;
+    width: 100%;
+    max-width: 600px;
+    text-align: center;
+    animation: fadeUp 0.6s ease both 0.3s;
+    opacity: 0;
+    animation-fill-mode: both;
+  }
+  .intro-icon {
+    font-size: 48px;
+    margin-bottom: 24px;
+    display: block;
+  }
+  .intro-card h2 {
+    font-family: 'Playfair Display', serif;
+    font-size: 26px;
+    font-weight: 700;
+    margin-bottom: 12px;
+  }
+  .intro-card p {
+    font-size: 14px;
+    color: var(--muted);
+    line-height: 1.7;
+    margin-bottom: 32px;
+    max-width: 380px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+  .btn-start {
+    background: var(--gold);
+    border: none;
+    color: #0d0d0f;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 15px;
+    font-weight: 700;
+    padding: 14px 36px;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: all 0.2s;
+    letter-spacing: 0.3px;
+  }
+  .btn-start:hover {
+    background: var(--gold-light);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 24px rgba(201,168,76,0.35);
+  }
+
+  .pills {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    justify-content: center;
+    margin-bottom: 28px;
+  }
+  .pill {
+    background: var(--gold-dim);
+    border: 1px solid rgba(201,168,76,0.2);
+    color: var(--gold);
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 1px;
+    padding: 6px 14px;
+    border-radius: 20px;
+  }
+
+  @keyframes fadeDown {
+    from { opacity: 0; transform: translateY(-20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes slideOut {
+    to { opacity: 0; transform: translateX(-30px); }
+  }
+  @keyframes sweepNeedle {
+    from { transform: rotate(var(--from)); }
+    to { transform: rotate(var(--to)); }
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-label">⚖ Ethics Assessment Tool</div>
+  <h1>The AI <span>Ethics</span> Meter</h1>
+  <div class="divider"></div>
+  <p>Answer 6 honest questions about how you used AI — and get an ethical verdict on your work.</p>
+</div>
+
+<div id="app"></div>
+
+<script>
+const QUESTIONS = [
+  {
+    id: 1,
+    text: "Did you understand the topic before using AI?",
+    sub: "Think about whether you had prior knowledge or researched the subject yourself first.",
+    options: [
+      { icon: "📚", text: "Yes — I knew the topic well and used AI to help express my thoughts.", score: 3 },
+      { icon: "🔍", text: "Somewhat — I did some research myself before turning to AI.", score: 2 },
+      { icon: "😐", text: "Not really — I used AI to learn about it while also creating the work.", score: 1 },
+      { icon: "🤷", text: "No — I gave AI the task and used what it produced.", score: 0 },
+    ]
+  },
+  {
+    id: 2,
+    text: "How much of the final content came from AI?",
+    sub: "Be honest — what percentage of the submitted work was generated by AI?",
+    options: [
+      { icon: "✍️", text: "Very little — AI gave minor suggestions, I wrote almost everything.", score: 3 },
+      { icon: "🤝", text: "About half — we collaborated, I rewrote and added my own ideas.", score: 2 },
+      { icon: "🤖", text: "Most of it — I edited and adjusted AI output.", score: 1 },
+      { icon: "📋", text: "Almost all — I copied or barely changed what AI produced.", score: 0 },
+    ]
+  },
+  {
+    id: 3,
+    text: "Did you critically review what AI gave you?",
+    sub: "Did you check for errors, biases, or things that didn't match your own thinking?",
+    options: [
+      { icon: "🧐", text: "Yes — I fact-checked, questioned, and improved the AI's output.", score: 3 },
+      { icon: "👀", text: "Partly — I read through it and made some changes.", score: 2 },
+      { icon: "⚡", text: "Barely — I made small edits but didn't really verify anything.", score: 1 },
+      { icon: "🚀", text: "No — I submitted it as-is without reviewing.", score: 0 },
+    ]
+  },
+  {
+    id: 4,
+    text: "Did you disclose your use of AI (when required)?",
+    sub: "If your teacher or assignment required disclosure, were you transparent?",
+    options: [
+      { icon: "✅", text: "Yes — I declared exactly how I used AI.", score: 3 },
+      { icon: "📝", text: "Partially — I mentioned it but wasn't fully detailed.", score: 2 },
+      { icon: "🙈", text: "No — I wasn't required to, but I wasn't transparent either.", score: 1 },
+      { icon: "❌", text: "No — I actively hid that I used AI.", score: 0 },
+    ]
+  },
+  {
+    id: 5,
+    text: "Did you learn something from the process?",
+    sub: "Did using AI help you actually understand the subject better?",
+    options: [
+      { icon: "🌱", text: "Yes — I used AI to understand concepts deeper and grew a lot.", score: 3 },
+      { icon: "💡", text: "Somewhat — I learned a few things along the way.", score: 2 },
+      { icon: "😶", text: "Not much — the AI did the thinking, I just selected the output.", score: 1 },
+      { icon: "📤", text: "No — I just needed the output, learning wasn't part of it.", score: 0 },
+    ]
+  },
+  {
+    id: 6,
+    text: "How would you describe your role in this work?",
+    sub: "Be honest about who was really the author of this work.",
+    options: [
+      { icon: "🧠", text: "The AI was my tool — I directed, decided, and created the vision.", score: 3 },
+      { icon: "🎼", text: "I was the editor — I shaped AI's output with my own judgment.", score: 2 },
+      { icon: "🛒", text: "I was a selector — I picked what AI gave me without much input.", score: 1 },
+      { icon: "👻", text: "The AI was the author — I just submitted what it made.", score: 0 },
+    ]
+  }
+];
+
+const VERDICTS = [
+  {
+    min: 15, max: 18,
+    label: "FULLY ETHICAL",
+    color: "#4caf7a",
+    bgColor: "rgba(76,175,122,0.12)",
+    title: "The Ethical Scholar",
+    desc: "You used AI the right way — as a genuine tool to amplify your own thinking and creativity. Your work reflects real learning, critical thought, and transparency. This is exactly what responsible AI use looks like.",
+    angle: 150,
+    items: [
+      { good: true, text: "Strong personal understanding before using AI" },
+      { good: true, text: "Original thinking drove the work" },
+      { good: true, text: "Critical review of AI output" },
+      { good: true, text: "Transparent and honest about AI use" },
+    ]
+  },
+  {
+    min: 10, max: 14,
+    label: "MOSTLY ETHICAL",
+    color: "#a8c44c",
+    bgColor: "rgba(168,196,76,0.12)",
+    title: "The Thoughtful User",
+    desc: "You made good choices but leaned on AI a bit more than ideal. With a little more personal ownership over the content and thinking process, you'd be fully in ethical territory. Keep building those habits.",
+    angle: 90,
+    items: [
+      { good: true, text: "Some personal understanding and review" },
+      { good: false, text: "Could be more transparent about AI's role" },
+      { good: false, text: "Learning might have been limited by over-reliance" },
+      { good: true, text: "Effort to engage with the output" },
+    ]
+  },
+  {
+    min: 5, max: 9,
+    label: "ETHICALLY GRAY",
+    color: "#e8c84c",
+    bgColor: "rgba(232,200,76,0.12)",
+    title: "The Gray Zoner",
+    desc: "Your use of AI raises some real ethical concerns. The line between 'tool' and 'replacement' got blurry. This doesn't make you a bad person — but it means the work may not truly represent your abilities or learning.",
+    angle: 20,
+    items: [
+      { good: false, text: "Limited personal understanding of the topic" },
+      { good: false, text: "AI did more of the thinking than you did" },
+      { good: true, text: "Some engagement with the process" },
+      { good: false, text: "Transparency and disclosure were lacking" },
+    ]
+  },
+  {
+    min: 0, max: 4,
+    label: "NOT ETHICAL",
+    color: "#e84c4c",
+    bgColor: "rgba(232,76,76,0.12)",
+    title: "The Ghosted Work",
+    desc: "Based on your answers, AI essentially did your assignment for you. This undermines the purpose of learning and isn't fair to you or others. Consider what you actually wanted from this task — and try again with AI as a tool, not a replacement.",
+    angle: -60,
+    items: [
+      { good: false, text: "No real understanding developed" },
+      { good: false, text: "AI was the author, not you" },
+      { good: false, text: "No critical review or personal voice" },
+      { good: false, text: "The work doesn't represent your abilities" },
+    ]
+  }
+];
+
+let state = {
+  phase: 'intro', // intro | quiz | result
+  current: 0,
+  answers: [],
+  score: 0
+};
+
+function getVerdict(score) {
+  return VERDICTS.find(v => score >= v.min && score <= v.max) || VERDICTS[3];
+}
+
+function renderIntro() {
+  return `
+    <div class="intro-card">
+      <span class="intro-icon">⚖️</span>
+      <h2>Is your AI use ethical?</h2>
+      <p>Answer 6 quick questions about how you used AI on a recent task. You'll get an honest verdict — no judgment, just clarity.</p>
+      <div class="pills">
+        <span class="pill">6 Questions</span>
+        <span class="pill">~2 minutes</span>
+        <span class="pill">Honest verdict</span>
+      </div>
+      <button class="btn-start" onclick="startQuiz()">Begin Assessment →</button>
+    </div>
+  `;
+}
+
+function renderQuestion() {
+  const q = QUESTIONS[state.current];
+  const progress = (state.current / QUESTIONS.length) * 100;
+  const selected = state.answers[state.current] ?? -1;
+
+  return `
+    <div class="progress-bar-wrap">
+      <div class="progress-meta">
+        <span>QUESTION ${state.current + 1} OF ${QUESTIONS.length}</span>
+        <span>${Math.round(progress)}% COMPLETE</span>
+      </div>
+      <div class="progress-track">
+        <div class="progress-fill" style="width:${progress}%"></div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="q-number">Q${q.id.toString().padStart(2,'0')} — ETHICS CHECK</div>
+      <div class="q-text">${q.text}</div>
+      <div class="q-sub">${q.sub}</div>
+      <div class="options">
+        ${q.options.map((opt, i) => `
+          <button class="option-btn ${selected === i ? 'selected' : ''}" onclick="selectAnswer(${i})">
+            <span class="option-icon">${opt.icon}</span>
+            <span class="option-text">${opt.text}</span>
+          </button>
+        `).join('')}
+      </div>
+      <div class="nav">
+        <button class="btn-back" onclick="goBack()" ${state.current === 0 ? 'style="opacity:0;pointer-events:none"' : ''}>← Back</button>
+        <button class="btn-next ${selected >= 0 ? 'active' : ''}" onclick="goNext()">
+          ${state.current === QUESTIONS.length - 1 ? 'Get Verdict ⚖️' : 'Next →'}
+        </button>
+      </div>
+    </div>
+  `;
+}
+
+function renderGauge(verdict) {
+  const angle = verdict.angle; // -90 to +90 mapped from left to right
+  // The gauge arc goes from -180deg to 0deg (left to right semicircle)
+  // We map our angle so: -60 = far left (bad), 150 = far right... 
+  // Actually let me use a proper semicircle approach
+  // Map score 0-18 to angle -90 to +90 on the gauge
+  const score = state.score;
+  const pct = score / 18;
+  const needleAngle = -90 + pct * 180; // -90 = left, +90 = right
+
+  const cx = 110, cy = 110, r = 80;
+  
+  // Gradient segments
+  const segments = [
+    { color: '#e84c4c', start: 210, end: 255 },
+    { color: '#e8924c', start: 255, end: 285 },
+    { color: '#e8c84c', start: 285, end: 315 },
+    { color: '#a8c44c', start: 315, end: 345 },
+    { color: '#4caf7a', start: 345, end: 390 },
+  ];
+
+  function arcPath(cx, cy, r, startAngle, endAngle) {
+    const s = startAngle * Math.PI / 180;
+    const e = endAngle * Math.PI / 180;
+    const x1 = cx + r * Math.cos(s), y1 = cy + r * Math.sin(s);
+    const x2 = cx + r * Math.cos(e), y2 = cy + r * Math.sin(e);
+    const lg = (endAngle - startAngle) > 180 ? 1 : 0;
+    return `M ${x1} ${y1} A ${r} ${r} 0 ${lg} 1 ${x2} ${y2}`;
+  }
+
+  const segs = segments.map(s =>
+    `<path d="${arcPath(cx, cy, r, s.start, s.end)}" stroke="${s.color}" stroke-width="14" fill="none" stroke-linecap="round"/>`
+  ).join('');
+
+  const needleLen = 65;
+  const needleRad = (needleAngle - 90) * Math.PI / 180;
+  const nx = cx + needleLen * Math.cos(needleRad);
+  const ny = cy + needleLen * Math.sin(needleRad);
+
+  return `
+    <div class="gauge-wrap">
+      <svg class="gauge-svg" viewBox="30 30 160 100">
+        <!-- Track -->
+        <path d="${arcPath(cx, cy, r, 210, 390)}" stroke="#2a2a35" stroke-width="14" fill="none"/>
+        <!-- Colored segments -->
+        ${segs}
+        <!-- Needle -->
+        <line x1="${cx}" y1="${cy}" x2="${nx}" y2="${ny}"
+          stroke="${verdict.color}" stroke-width="2.5" stroke-linecap="round"
+          style="transform-origin:${cx}px ${cy}px;
+                 animation: sweepIn 1.2s cubic-bezier(0.34,1.56,0.64,1) both 0.4s"/>
+        <circle cx="${cx}" cy="${cy}" r="5" fill="${verdict.color}"/>
+        <!-- Score label -->
+        <text x="${cx}" y="${cy + 28}" text-anchor="middle"
+          font-family="'DM Mono', monospace" font-size="11" fill="#7a7870" letter-spacing="1">
+          SCORE ${score}/18
+        </text>
+      </svg>
+    </div>
+    <style>
+      @keyframes sweepIn {
+        from { transform: rotate(${-90 - (needleAngle-(-90))}deg); opacity: 0; }
+        to { transform: rotate(0deg); opacity: 1; }
+      }
+    </style>
+  `;
+}
+
+function renderResult() {
+  const verdict = getVerdict(state.score);
+  const allItems = verdict.items;
+
+  return `
+    <div class="result-card">
+      <div style="position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,transparent,${verdict.color},transparent)"></div>
+      <div class="verdict-badge" style="background:${verdict.bgColor};color:${verdict.color};border:1px solid ${verdict.color}33">
+        ${verdict.label}
+      </div>
+      ${renderGauge(verdict)}
+      <div class="verdict-title" style="color:${verdict.color}">${verdict.title}</div>
+      <div class="verdict-desc">${verdict.desc}</div>
+
+      <div class="breakdown">
+        <div class="breakdown-title">ASSESSMENT BREAKDOWN</div>
+        ${QUESTIONS.map((q, i) => {
+          const ansIdx = state.answers[i] ?? 0;
+          const ans = q.options[ansIdx];
+          const good = ans.score >= 2;
+          return `
+            <div class="breakdown-item">
+              <div class="breakdown-dot" style="background:${good ? '#4caf7a' : ans.score === 1 ? '#e8c84c' : '#e84c4c'}"></div>
+              <div>
+                <div style="font-size:11px;color:var(--muted);margin-bottom:2px;font-family:'DM Mono',monospace;letter-spacing:1px">Q${i+1}: ${q.text}</div>
+                <div style="font-size:13px;color:var(--text)">${ans.text}</div>
+              </div>
+            </div>
+          `;
+        }).join('')}
+      </div>
+
+      <button class="btn-restart" onclick="restart()">↩ Take the test again</button>
+    </div>
+  `;
+}
+
+function render() {
+  const app = document.getElementById('app');
+  if (state.phase === 'intro') app.innerHTML = renderIntro();
+  else if (state.phase === 'quiz') app.innerHTML = renderQuestion();
+  else app.innerHTML = renderResult();
+}
+
+function startQuiz() {
+  state.phase = 'quiz';
+  state.current = 0;
+  state.answers = [];
+  state.score = 0;
+  render();
+}
+
+function selectAnswer(i) {
+  state.answers[state.current] = i;
+  render();
+}
+
+function goNext() {
+  if (state.answers[state.current] === undefined) return;
+  if (state.current < QUESTIONS.length - 1) {
+    state.current++;
+    render();
+  } else {
+    // Calculate score
+    state.score = QUESTIONS.reduce((sum, q, i) => {
+      return sum + (q.options[state.answers[i] ?? 0].score);
+    }, 0);
+    state.phase = 'result';
+    render();
+  }
+}
+
+function goBack() {
+  if (state.current > 0) {
+    state.current--;
+    render();
+  }
+}
+
+function restart() {
+  state = { phase: 'intro', current: 0, answers: [], score: 0 };
+  render();
+}
+
+render();
+</script>
+</body>
+</html>
